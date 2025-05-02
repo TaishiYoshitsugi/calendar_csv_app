@@ -382,37 +382,38 @@ export default function CSVUploader({ onUpload }: CSVUploaderProps) {
 
   return (
     <VStack spacing={4} align="stretch">
-      <Box>
-        {!fileName && (
-          <>
-            <Text mb={2} fontFamily="'Kosugi Maru', sans-serif">
-              CSVファイルをアップロードしてください
-            </Text>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileUpload}
-              style={{ display: 'none' }}
-              id="csv-upload"
-              disabled={isProcessing}
-            />
-            <Button
-              as="label"
-              htmlFor="csv-upload"
-              cursor="pointer"
-              bg="#bf000a"
-              color="white"
-              _hover={{ bg: "#a0000a" }}
-              fontFamily="Kosugi Maru"
-              isLoading={isProcessing}
-              loadingText="処理中..."
-              transition="all 0.2s"
-              _active={{ transform: 'scale(0.95)' }}
-            >
-              ファイルを選択
-            </Button>
-          </>
-        )}
+      <Box textAlign="center">
+        <Text fontSize="lg" fontWeight="medium" mb={2}>カイポケ 各種情報出力/出力対象選択/スケジュール表</Text>
+        <Text fontSize="sm" color="gray.600" mb={4}>「予定」・「月間スケジュールから取得」を選択しcsvを出力してください</Text>
+        <HStack justify="center">
+          {!fileName && (
+            <>
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+                id="csv-upload"
+                disabled={isProcessing}
+              />
+              <Button
+                as="label"
+                htmlFor="csv-upload"
+                cursor="pointer"
+                bg="#bf000a"
+                color="white"
+                _hover={{ bg: "#a0000a" }}
+                fontFamily="Kosugi Maru"
+                isLoading={isProcessing}
+                loadingText="処理中..."
+                transition="all 0.2s"
+                _active={{ transform: 'scale(0.95)' }}
+              >
+                ファイルを選択
+              </Button>
+            </>
+          )}
+        </HStack>
       </Box>
 
       {fileName && (
