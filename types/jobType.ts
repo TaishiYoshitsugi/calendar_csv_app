@@ -1,0 +1,1 @@
+export type JobType = '看護師' | '理学療法士' | '作業療法士' 
