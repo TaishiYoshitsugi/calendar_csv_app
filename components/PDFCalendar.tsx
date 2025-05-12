@@ -4,13 +4,14 @@ import { Document, Page, Text, View, StyleSheet, PDFViewer, pdf } from '@react-p
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, getDay } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Box, Button, Modal, ModalOverlay, ModalContent, ModalBody, ModalCloseButton } from '@chakra-ui/react'
-import { Schedule } from '../types/schedule'
+import { Schedule, UserSchedule } from '../types/schedule'
+import { useEffect, useState } from 'react'
 
 interface PDFCalendarProps {
-  schedules: Schedule[]
+  schedules: UserSchedule
   currentDate: Date
   selectedUser: string
-  onClose: () => void
+  onClose?: () => void
 }
 
 // PDFのスタイル定義
@@ -20,9 +21,10 @@ const styles = StyleSheet.create({
     fontFamily: 'KosugiMaru',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     marginBottom: 10,
     textAlign: 'center',
+    fontWeight: 'bold',
   },
   user: {
     fontSize: 18,
@@ -98,7 +100,22 @@ const PDFCalendarDocument = ({ schedules, currentDate, selectedUser }: PDFCalend
   const offset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1
 
   const getSchedulesForDate = (date: Date) => {
-    return schedules.filter(schedule => schedule.date === date.getDate())
+    if (!selectedUser) return [];
+    const userSchedules = schedules[selectedUser] || [];
+    return userSchedules
+      .filter((schedule: Schedule) => {
+        // 日付の比較を年月日で行う
+        const scheduleDate = new Date(schedule.date);
+        const targetDate = new Date(date);
+        return scheduleDate.getFullYear() === targetDate.getFullYear() &&
+               scheduleDate.getMonth() === targetDate.getMonth() &&
+               scheduleDate.getDate() === targetDate.getDate();
+      })
+      .sort((a: Schedule, b: Schedule) => {
+        const timeA = a.startTime.replace(':', '');
+        const timeB = b.startTime.replace(':', '');
+        return parseInt(timeA) - parseInt(timeB);
+      });
   }
 
   const getDateColor = (date: Date) => {
@@ -148,14 +165,29 @@ const PDFCalendarDocument = ({ schedules, currentDate, selectedUser }: PDFCalend
 }
 
 export default function PDFCalendar({ schedules, currentDate, selectedUser, onClose }: PDFCalendarProps) {
+  const [pdfData, setPdfData] = useState<Omit<PDFCalendarProps, 'onClose'>>({
+    schedules,
+    currentDate: new Date(currentDate),
+    selectedUser
+  });
+
+  useEffect(() => {
+    // 現在の日付とスケジュールを最新の状態に更新
+    setPdfData({
+      schedules,
+      currentDate: new Date(currentDate),
+      selectedUser
+    });
+  }, [schedules, currentDate, selectedUser]);
+
   const handleDownload = async () => {
     try {
       const blob = await pdf(
         <PDFCalendarDocument
           schedules={schedules}
-          currentDate={currentDate}
+          currentDate={new Date(currentDate)}
           selectedUser={selectedUser}
-          onClose={onClose}
+          onClose={onClose || (() => {})}
         />
       ).toBlob()
       
@@ -173,7 +205,7 @@ export default function PDFCalendar({ schedules, currentDate, selectedUser, onCl
   }
 
   return (
-    <Modal isOpen={true} onClose={onClose} size="full">
+    <Modal isOpen={true} onClose={onClose || (() => {})} size="full">
       <ModalOverlay />
       <ModalContent>
         <ModalCloseButton />
@@ -194,9 +226,9 @@ export default function PDFCalendar({ schedules, currentDate, selectedUser, onCl
             <PDFViewer style={{ width: '100%', height: '100%' }}>
               <PDFCalendarDocument
                 schedules={schedules}
-                currentDate={currentDate}
+                currentDate={new Date(currentDate)}
                 selectedUser={selectedUser}
-                onClose={onClose}
+                onClose={onClose || (() => {})}
               />
             </PDFViewer>
           </Box>

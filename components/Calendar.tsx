@@ -583,7 +583,7 @@ const Calendar: React.FC<CalendarProps> = ({
         return (
           <PDFCalendarDocument
             key={user}
-            currentDate={currentDate}
+            currentDate={new Date(currentDate)}
             selectedUser={user}
             schedules={userSchedules}
             selectedOffice={selectedOffice}
@@ -1049,9 +1049,7 @@ const PDFCalendarDocument: React.FC<PDFCalendarDocumentProps> = ({ currentDate, 
       try {
         setLogoError('');
         const logoPath = isGrayscale ? "/images/logo_trimming_grey.png" : "/images/logo_trimming.png";
-        console.log('Loading logo from:', logoPath);
         const base64 = await convertImageToBase64(logoPath);
-        console.log('Logo loaded successfully');
         setLogoBase64(base64);
       } catch (error) {
         console.error('ロゴの読み込みに失敗しました:', error);
@@ -1061,12 +1059,10 @@ const PDFCalendarDocument: React.FC<PDFCalendarDocumentProps> = ({ currentDate, 
     loadLogo();
   }, [isGrayscale]);
 
-  const today = new Date();
-  const firstDay = startOfMonth(today);
-  const lastDay = endOfMonth(today);
+  const firstDay = startOfMonth(currentDate);
+  const lastDay = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: firstDay, end: lastDay });
   const offset = getDay(firstDay);
-
   const weekDays = ['月', '火', '水', '木', '金', '土', '日'];
 
   const getLastName = (fullName: string | undefined): string => {
@@ -1078,11 +1074,14 @@ const PDFCalendarDocument: React.FC<PDFCalendarDocumentProps> = ({ currentDate, 
     return daySchedules
       .filter(schedule => schedule && schedule.staff && schedule.startTime && schedule.endTime)
       .sort((a, b) => {
-        // 時間を比較して早い順にソート
         const timeA = a.startTime.replace(':', '');
         const timeB = b.startTime.replace(':', '');
         return parseInt(timeA) - parseInt(timeB);
       });
+  };
+
+  const getSchedulesForDate = (date: Date) => {
+    return schedules.filter(schedule => Number(schedule.date) === date.getDate());
   };
 
   return (
@@ -1100,7 +1099,7 @@ const PDFCalendarDocument: React.FC<PDFCalendarDocumentProps> = ({ currentDate, 
 
         <View style={pdfStyles.header}>
           <Text style={pdfStyles.title}>
-            {format(today, 'yyyy年MM月')} {selectedUser}様
+            {format(currentDate, 'yyyy年MM月')} {selectedUser}様
           </Text>
         </View>
 
@@ -1126,7 +1125,7 @@ const PDFCalendarDocument: React.FC<PDFCalendarDocumentProps> = ({ currentDate, 
             ))}
 
             {days.map((day) => {
-              const daySchedules = schedules.filter(s => s.date === day.getDate());
+              const daySchedules = getSchedulesForDate(day);
               const sortedSchedules = getSortedSchedules(daySchedules);
               const isWeekend = getDay(day) === 0;
               const isSaturday = getDay(day) === 6;
