@@ -508,15 +508,28 @@ const Calendar: React.FC<CalendarProps> = ({
   const users = getFilteredUsers();
   const staffList = getAllStaff();
   const scheduleOffices = getScheduleOffices();
-  const days = eachDayOfInterval({
-    start: startOfMonth(currentDate),
-    end: endOfMonth(currentDate)
-  })
+  const firstDay = startOfMonth(currentDate);
+  const lastDay = endOfMonth(currentDate);
+  const days = eachDayOfInterval({ start: firstDay, end: lastDay });
+  const offset = getDay(firstDay) === 0 ? 6 : getDay(firstDay) - 1;
+  const weekDays = ['月', '火', '水', '木', '金', '土', '日'];
+  const totalWeeks = Math.ceil((days.length + offset) / 7);
+  const isSixWeeks = totalWeeks === 6;
 
-  const weekDays = ['月', '火', '水', '木', '金', '土', '日']
+  const getDynamicDayHeight = () => {
+    if (isSixWeeks) {
+      return {
+        minHeight: 75,
+        maxHeight: 75,
+      };
+    }
+    return {
+      minHeight: 92,
+      maxHeight: 92,
+    };
+  };
 
-  const firstDayOfMonth = getDay(startOfMonth(currentDate))
-  const offset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1
+  const dynamicDayStyle = getDynamicDayHeight();
 
   const getSchedulesForDate = (date: Date) => {
     if (!selectedUser) return [];
@@ -1062,8 +1075,25 @@ const PDFCalendarDocument: React.FC<PDFCalendarDocumentProps> = ({ currentDate, 
   const firstDay = startOfMonth(currentDate);
   const lastDay = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: firstDay, end: lastDay });
-  const offset = getDay(firstDay);
+  const offset = getDay(firstDay) === 0 ? 6 : getDay(firstDay) - 1;
   const weekDays = ['月', '火', '水', '木', '金', '土', '日'];
+  const totalWeeks = Math.ceil((days.length + offset) / 7);
+  const isSixWeeks = totalWeeks === 6;
+
+  const getDynamicDayHeight = () => {
+    if (isSixWeeks) {
+      return {
+        minHeight: 75,
+        maxHeight: 75,
+      };
+    }
+    return {
+      minHeight: 92,
+      maxHeight: 92,
+    };
+  };
+
+  const dynamicDayStyle = getDynamicDayHeight();
 
   const getLastName = (fullName: string | undefined): string => {
     if (!fullName) return '';
@@ -1121,7 +1151,13 @@ const PDFCalendarDocument: React.FC<PDFCalendarDocumentProps> = ({ currentDate, 
 
           <View style={pdfStyles.days}>
             {Array(offset).fill(null).map((_, index) => (
-              <View key={`empty-${index}`} style={pdfStyles.dayEmpty} />
+              <View 
+                key={`empty-${index}`} 
+                style={{
+                  ...pdfStyles.dayEmpty,
+                  ...dynamicDayStyle
+                }} 
+              />
             ))}
 
             {days.map((day) => {
@@ -1134,7 +1170,13 @@ const PDFCalendarDocument: React.FC<PDFCalendarDocumentProps> = ({ currentDate, 
                 (isHolidayDate || isWeekend ? pdfStyles.weekend : isSaturday ? pdfStyles.saturday : pdfStyles.dayHeader);
 
               return (
-                <View key={day.toString()} style={pdfStyles.day}>
+                <View 
+                  key={day.toString()} 
+                  style={{
+                    ...pdfStyles.day,
+                    ...dynamicDayStyle
+                  }}
+                >
                   <View style={{ height: 20, display: 'flex', justifyContent: 'center' }}>
                     <Text style={dayStyle}>
                       {format(day, 'd')}
@@ -1154,17 +1196,20 @@ const PDFCalendarDocument: React.FC<PDFCalendarDocumentProps> = ({ currentDate, 
                         <View key={i} style={{
                           ...pdfStyles.schedule,
                           backgroundColor: getJobTypeColor(jobType, isGrayscale),
-                          border: isGrayscale ? '1px solid #000000' : '1px solid #BEE3F8'
+                          border: isGrayscale ? '1px solid #000000' : '1px solid #BEE3F8',
+                          height: isSixWeeks ? 30 : 35
                         }}>
                           <Text style={{
                             ...pdfStyles.scheduleTime,
-                            color: isGrayscale ? '#000000' : '#2C5282'
+                            color: isGrayscale ? '#000000' : '#2C5282',
+                            fontSize: isSixWeeks ? 11 : 13
                           }}>
                             {processText(schedule.startTime)} - {processText(schedule.endTime)}
                           </Text>
                           <Text style={{
                             ...pdfStyles.scheduleStaff,
-                            color: isGrayscale ? '#000000' : '#2B6CB0'
+                            color: isGrayscale ? '#000000' : '#2B6CB0',
+                            fontSize: isSixWeeks ? 8 : 9
                           }}>
                             {processText(getLastName(schedule.staff))}
                           </Text>
